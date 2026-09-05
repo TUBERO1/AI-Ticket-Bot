@@ -40,7 +40,6 @@ async def send_ai_reply(
     ticket_id: int | None = None,
     thread_id: int | None = None,
     custom_prompt: str = "",
-    server_mode: str = "lumentia",
     abuse_ctx: AbuseContext | None = None,
 ):
     await db.add_message("user", user_content, ticket_id=ticket_id, thread_id=thread_id)
@@ -54,7 +53,6 @@ async def send_ai_reply(
         reply = await llm.chat(
             history,
             custom_prompt=custom_prompt,
-            server_mode=server_mode,
             abuse_ctx=abuse_ctx,
         )
 
@@ -92,7 +90,6 @@ async def process_pending_consult(bot: commands.Bot, db: Database, user_id: int)
             guild_name=guild.name,
             channel_id=pending["channel_id"],
             channel_name=getattr(channel, "name", str(pending["channel_id"])),
-            server_mode=pending["server_mode"],
         )
         member = guild.get_member(user_id)
         if member:
@@ -107,7 +104,6 @@ async def process_pending_consult(bot: commands.Bot, db: Database, user_id: int)
             ticket_id=pending["ticket_id"],
             thread_id=pending["thread_id"],
             custom_prompt=pending["custom_prompt"] or "",
-            server_mode=pending["server_mode"],
             abuse_ctx=ctx,
         )
     except discord.HTTPException:
@@ -122,7 +118,6 @@ async def process_pending_consult(bot: commands.Bot, db: Database, user_id: int)
 async def ensure_terms_before_ai(
     message: discord.Message,
     db: Database,
-    server_mode: str,
     custom_prompt: str,
     ticket_id: int | None,
     thread_id: int | None,
@@ -139,15 +134,15 @@ async def ensure_terms_before_ai(
         guild_id=message.guild.id,
         channel_id=target_id,
         content=message.content.strip(),
-        server_mode=server_mode,
+        server_mode="default",
         thread_id=thread_id,
         ticket_id=ticket_id,
         custom_prompt=custom_prompt,
     )
 
     prompt = (
-        f"{message.author.mention} AI 상담을 이용하려면 **이용약관에 동의**해 주세요.\n"
-        "**이용약관 확인하기**는 본인만 볼 수 있으며, **동의**는 최초 1회만 필요합니다."
+        f"{message.author.mention} AI 상담을 쓰려면 **이용약관에 동의**해 주세요.\n"
+        "**이용약관 확인하기**는 본인만 보이고, **동의**는 처음 한 번만 하면 됩니다."
     )
     await target.send(prompt, view=TermsAgreementView(), allowed_mentions=SAFE_MENTIONS)
     return False

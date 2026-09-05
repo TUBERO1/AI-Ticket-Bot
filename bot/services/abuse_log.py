@@ -1,6 +1,6 @@
-import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import logging
 
 import discord
 
@@ -9,8 +9,6 @@ log = logging.getLogger("bot.abuse")
 EVENT_META = {
     "injection": ("프롬프트 인젝션", discord.Color.red()),
     "out_of_scope": ("범위 밖 문의", discord.Color.orange()),
-    "non_korean_output": ("비한국어 응답 차단", discord.Color.gold()),
-    "offtopic_output": ("주제 이탈 응답", discord.Color.gold()),
     "unsafe_output": ("위험 응답 차단", discord.Color.red()),
     "spam_repeat": ("반복 스팸", discord.Color.dark_red()),
 }
@@ -24,10 +22,9 @@ class AbuseContext:
     guild_name: str
     channel_id: int
     channel_name: str
-    server_mode: str = "lumentia"
 
     @classmethod
-    def from_message(cls, message: discord.Message, server_mode: str = "lumentia") -> "AbuseContext":
+    def from_message(cls, message: discord.Message) -> "AbuseContext":
         guild = message.guild
         channel = message.channel
         return cls(
@@ -37,7 +34,6 @@ class AbuseContext:
             guild_name=guild.name if guild else "?",
             channel_id=channel.id,
             channel_name=getattr(channel, "name", str(channel.id)),
-            server_mode=server_mode,
         )
 
 
@@ -61,8 +57,7 @@ class AbuseLogger:
             return ch
         try:
             return await self.bot.fetch_channel(self.channel_id)
-        except discord.HTTPException as e:
-            log.error("악용 로그 채널 조회 실패: %s", e)
+        except discord.HTTPException:
             return None
 
     async def report(
@@ -85,7 +80,6 @@ class AbuseLogger:
         embed = discord.Embed(title=f"악용 탐지 · {title}", color=color, timestamp=datetime.now(timezone.utc))
         embed.add_field(name="유저", value=f"<@{ctx.user_id}>\n`{ctx.user_id}`", inline=True)
         embed.add_field(name="서버", value=f"{ctx.guild_name}\n`{ctx.guild_id}`", inline=True)
-        embed.add_field(name="모드", value=ctx.server_mode, inline=True)
         embed.add_field(name="채널", value=f"<#{ctx.channel_id}>\n`{ctx.channel_id}`", inline=False)
         embed.add_field(name="내용", value=f"```\n{_clip(content)}\n```", inline=False)
         if note:

@@ -3,7 +3,6 @@ from discord.ext import commands
 
 from bot.config import AppSettings
 from bot.db import Database
-from bot.guild_config import MODE_RFIVEM
 from bot.guild_resolver import resolve_guild_config
 from bot.services.abuse_log import AbuseContext
 from bot.services.llm import LlmService
@@ -115,11 +114,7 @@ class Support(commands.Cog):
 
         return False
 
-    async def _create_thread(
-        self,
-        message: discord.Message,
-        guild_cfg,
-    ) -> discord.Thread:
+    async def _create_thread(self, message: discord.Message) -> discord.Thread:
         thread = await message.create_thread(
             name=self._thread_name(message.author),
             auto_archive_duration=1440,
@@ -127,19 +122,10 @@ class Support(commands.Cog):
         )
 
         await self._save_owner(thread, message.author.id)
-
-        if guild_cfg.server_mode == MODE_RFIVEM:
-            intro = (
-                f"{message.author.mention} 님의 RFIVEM 문의 스레드입니다.\n"
-                "이 스레드는 본인만 사용할 수 있습니다.\n"
-                "상황을 구체적으로 적어 주시면 Non-RP / 이중 RP / 파워게이밍 등을 판별해 드립니다."
-            )
-        else:
-            intro = (
-                f"{message.author.mention} 님의 문의 스레드입니다.\n"
-                "이 스레드는 본인만 사용할 수 있습니다. 이곳에서 이어서 대화합니다."
-            )
-
+        intro = (
+            f"{message.author.mention} 님의 문의 스레드입니다.\n"
+            "이 스레드는 본인만 사용할 수 있습니다. 여기서 이어서 대화하세요."
+        )
         await thread.send(intro)
         return thread
 
@@ -173,7 +159,7 @@ class Support(commands.Cog):
             if not isinstance(message.channel, discord.TextChannel):
                 return
             try:
-                thread = await self._create_thread(message, guild_cfg)
+                thread = await self._create_thread(message)
             except (discord.Forbidden, discord.HTTPException):
                 await message.channel.send(
                     f"{message.author.mention} 스레드를 만들 수 없습니다. 봇 권한을 확인해 주세요.",
@@ -186,7 +172,6 @@ class Support(commands.Cog):
         if not await ensure_terms_before_ai(
             message,
             self.db,
-            guild_cfg.server_mode,
             guild_cfg.custom_prompt,
             ticket_id=None,
             thread_id=thread.id,
@@ -203,8 +188,7 @@ class Support(commands.Cog):
                 message.content.strip(),
                 thread_id=thread.id,
                 custom_prompt=guild_cfg.custom_prompt,
-                server_mode=guild_cfg.server_mode,
-                abuse_ctx=AbuseContext.from_message(message, guild_cfg.server_mode),
+                abuse_ctx=AbuseContext.from_message(message),
             )
         except discord.HTTPException:
             await thread.send("응답 전송에 실패했습니다. 다시 시도해 주세요.")

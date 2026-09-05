@@ -38,7 +38,7 @@ class Database:
 
             CREATE TABLE IF NOT EXISTS guild_settings (
                 guild_id INTEGER PRIMARY KEY,
-                server_mode TEXT NOT NULL DEFAULT 'lumentia',
+                server_mode TEXT NOT NULL DEFAULT 'default',
                 ticket_category_id INTEGER,
                 staff_role_id INTEGER,
                 support_channel_ids TEXT NOT NULL DEFAULT '[]',
@@ -111,7 +111,6 @@ class Database:
         channels = json.loads(row["support_channel_ids"] or "[]")
         return GuildConfig(
             guild_id=row["guild_id"],
-            server_mode=row["server_mode"] if "server_mode" in row.keys() else "lumentia",
             ticket_category_id=row["ticket_category_id"],
             staff_role_id=row["staff_role_id"],
             support_channel_ids=[int(x) for x in channels],
@@ -133,10 +132,9 @@ class Database:
         await self._conn.execute(
             """
             INSERT INTO guild_settings
-                (guild_id, server_mode, ticket_category_id, staff_role_id, support_channel_ids, faq_context, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+                (guild_id, ticket_category_id, staff_role_id, support_channel_ids, faq_context, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(guild_id) DO UPDATE SET
-                server_mode = excluded.server_mode,
                 ticket_category_id = excluded.ticket_category_id,
                 staff_role_id = excluded.staff_role_id,
                 support_channel_ids = excluded.support_channel_ids,
@@ -145,7 +143,6 @@ class Database:
             """,
             (
                 config.guild_id,
-                config.server_mode,
                 config.ticket_category_id,
                 config.staff_role_id,
                 json.dumps(config.support_channel_ids),
@@ -180,11 +177,6 @@ class Database:
         cfg.support_channel_ids.remove(channel_id)
         await self.save_guild_config(cfg)
         return True
-
-    async def set_server_mode(self, guild_id: int, mode: str):
-        cfg = await self.get_guild_config(guild_id) or GuildConfig(guild_id=guild_id)
-        cfg.server_mode = mode
-        await self.save_guild_config(cfg)
 
     async def close_stale_ticket(self, channel_id: int):
         await self.close_ticket(channel_id)

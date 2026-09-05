@@ -4,7 +4,6 @@ from discord.ext import commands
 
 from bot.config import AppSettings
 from bot.db import Database
-from bot.guild_config import MODE_LUMENTIA, MODE_RFIVEM
 from bot.guild_resolver import resolve_guild_config
 from bot.services.abuse_log import AbuseContext
 from bot.services.llm import LlmService
@@ -60,19 +59,14 @@ class Tickets(commands.Cog):
             await interaction.response.send_message("서버 채널에서만 사용할 수 있습니다.", ephemeral=True)
             return
 
-        guild_cfg = await resolve_guild_config(self.db, interaction.guild.id)
-        if guild_cfg.server_mode == MODE_RFIVEM:
-            title = "📩 RFIVEM 법률·RP 문의"
-            desc = (
-                "RP 상황을 설명하고 **문의하기**를 누르세요.\n"
-                "Non-RP / Bad RP 판정, 법령·채팅 규칙(OOC·IC·알피 등)을 안내합니다.\n"
-                "공식 운영 문의: `rfivembusiness@gmail.com`"
-            )
-        else:
-            title = "📩 1:1 문의"
-            desc = "아래 **문의하기** 버튼을 누르면 개인 문의 채널이 생성됩니다.\nAI가 먼저 답변해 드리며, 필요 시 **관리자 호출**도 가능합니다."
-
-        embed = discord.Embed(title=title, description=desc, color=discord.Color.blurple())
+        embed = discord.Embed(
+            title="📩 1:1 문의",
+            description=(
+                "아래 **문의하기**를 누르면 개인 문의 채널이 만들어집니다.\n"
+                "AI가 먼저 답하고, 필요하면 **관리자 호출**도 됩니다."
+            ),
+            color=discord.Color.blurple(),
+        )
         await interaction.response.send_message("티켓 패널을 배포했습니다.", ephemeral=True)
         await interaction.channel.send(embed=embed, view=TicketPanelView())
 
@@ -128,7 +122,7 @@ class Tickets(commands.Cog):
         await channel.send(welcome, view=TicketControlView())
         await self.db.add_message(
             "assistant",
-            self.llm.welcome_message(guild_cfg.server_mode),
+            self.llm.welcome_message(),
             ticket_id=ticket_id,
         )
         await interaction.followup.send(f"티켓이 생성되었습니다: {channel.mention}", ephemeral=True)
@@ -208,7 +202,6 @@ class Tickets(commands.Cog):
         if not await ensure_terms_before_ai(
             message,
             self.db,
-            guild_cfg.server_mode,
             guild_cfg.custom_prompt,
             ticket_id=ticket["id"],
             thread_id=None,
@@ -224,8 +217,7 @@ class Tickets(commands.Cog):
                 message.content.strip(),
                 ticket_id=ticket["id"],
                 custom_prompt=guild_cfg.custom_prompt,
-                server_mode=guild_cfg.server_mode,
-                abuse_ctx=AbuseContext.from_message(message, guild_cfg.server_mode),
+                abuse_ctx=AbuseContext.from_message(message),
             )
         except discord.HTTPException:
             await message.channel.send("응답 전송에 실패했습니다. 다시 시도해 주세요.")

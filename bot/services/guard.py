@@ -2,10 +2,8 @@ import re
 import unicodedata
 
 INJECTION_REPLY = (
-    "해당 요청은 처리할 수 없습니다.\n"
-    "저는 **Lumentia** 디스코드 서버의 문의 안내 AI이며, "
-    "외주 서비스·가격·등급·진행 방식·문의 방법 관련 질문만 도와드릴 수 있어요.\n"
-    "궁금한 점이 있으시면 편하게 물어보세요!"
+    "그 요청은 처리할 수 없어요.\n"
+    "문의 내용만 남겨 주세요. 필요하면 관리자 호출을 이용해 주세요."
 )
 
 ZERO_WIDTH = re.compile(r"[\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]")
@@ -24,8 +22,6 @@ HARD_PATTERNS = [
     r"규칙\s*(를|을|만)?\s*무시",
     r"이전\s*(지시|명령|규칙|대화|맥락)\s*무시",
     r"위\s*(지시|명령|규칙)\s*무시",
-    r"맨\s*위\s*지시",
-    r"최상위\s*지시",
     r"ignore\s+(all\s+)?(previous\s+)?(prompts?|instructions?|rules?|context)",
     r"disregard\s+(all\s+)?(previous\s+)?(prompts?|instructions?|rules?)",
     r"forget\s+(all\s+)?(previous\s+)?(prompts?|instructions?|rules?)",
@@ -55,7 +51,6 @@ HARD_PATTERNS = [
     r"너는\s*이제\s+",
     r"너의\s*역할은\s*이제",
     r"새로운\s*(지시|명령|규칙|역할)",
-    r"다음\s*지시",
     r"비밀\s*지시",
     r"숨겨진\s*지시",
     r"진짜\s*지시",
@@ -68,21 +63,12 @@ HARD_PATTERNS = [
     r"show\s+(me\s+)?(your\s+)?(system\s+)?prompt",
     r"print\s+(your\s+)?(system\s+)?prompt",
     r"repeat\s+(the\s+)?(system\s+)?(prompt|instructions?)",
-    r"(안녕|hello|hi)\s*(만|only)?\s*(출력|말해|해|써)",
-    r"(만|only)\s*(안녕|hello|hi)\s*(출력|말해|해|써)",
-    r"(출력|말해|써)\s*(만|only)?\s*(안녕|hello)",
     r"그대로\s*따라",
     r"그대로\s*반복",
-    r"복사해서\s*말해",
     r"echo\s+",
     r"say\s+only\s+",
     r"respond\s+only\s+with",
     r"output\s+only\s+",
-    r"write\s+(a\s+)?(python|javascript|java|c\+\+|code)\s",
-    r"(python|javascript|파이썬|자바)\s*(코드|code)\s*(를|을)?\s*(만들|작성|생성|짜)",
-    r"코드\s*(를|을)?\s*(만들|작성|생성|짜)",
-    r"스크립트\s*(를|을)?\s*(만들|작성)",
-    r"```",
     r"<\|im_start\|>",
     r"<\|im_end\|>",
     r"\[INST\]",
@@ -99,7 +85,6 @@ HARD_PATTERNS = [
     r"rm\s+-rf",
     r"해킹",
     r"크랙",
-    r"불법",
     r"악성\s*코드",
     r"랜섬웨어",
     r"피싱\s*사이트",
@@ -120,27 +105,13 @@ SOFT_KEYWORDS = [
     "출력만", "only say", "only output", "repeat after", "그대로",
     "비밀", "secret", "hidden", "reveal", "leak", "노출",
     "dan", "sudo", "dev mode", "새 규칙", "new rule",
-    "가정해봐", "hypothetically", "fiction", "소설처럼", "상상해봐",
-    "테스트 목적", "for educational", "연구 목적",
-    "admin", "관리자 권한", "root 권한",
     "토큰", "api key", "api키", "비밀번호 알려",
 ]
 
 LEGIT_KEYWORDS = [
-    "lumentia", "루멘티아", "외주", "견적", "가격", "비용", "얼마",
-    "개발", "제작", "의뢰", "문의", "티켓", "구매", "주문",
-    "봇", "플러그인", "웹사이트", "랜딩", "api", "백엔드", "db",
-    "마인크래프트", "로블록스", "유지보수", "수정", "납품", "납기",
-    "환불", "등급", "vip", "vvip", "mvip", "svip", "diamond",
-    "할인", "혜택", "호스팅", "취약점", "사이트", "lumentia.co.kr",
-    "사업자", "support@", "business@", "진행", "결제", "상담",
-    "rfivem", "fivem", "파이브엠", "논알피", "논 rp", "non rp", "배드알피", "bad rp",
-    "형법", "법전", "법률", "rp", "알피", "역할극", "판별", "rdm", "vdm", "nlr",
-    "보호구역", "팩션", "구금", "벌금", "체포", "총기",
-    "ooc", "ic", "메타", "메타게이밍", "초성", "근접", "인스타", "스태프콜",
-    "이중rp", "이중", "스토리", "영장", "보안국", "센트럴병원", "국군",
-    "파워게이밍", "powergaming", "메타게이밍", "rdm", "vdm", "필드rp",
-    "rfivem", "rfivembusiness",
+    "문의", "티켓", "도움", "질문", "신고", "환불", "결제", "계정",
+    "서버", "역할", "채널", "봇", "설정", "오류", "버그", "접속",
+    "관리자", "스태프", "운영", "규칙", "가이드", "이용", "가입",
 ]
 
 OUTPUT_LEAK_PATTERNS = [
@@ -148,12 +119,6 @@ OUTPUT_LEAK_PATTERNS = [
     r"시스템\s*지시",
     r"my\s+system\s+prompt",
     r"my\s+instructions?\s+are",
-    r"```python",
-    r"```javascript",
-    r"```js\b",
-    r"def\s+\w+\s*\(",
-    r"import\s+os\b",
-    r"import\s+subprocess",
     r"jailbreak\s+successful",
     r"제한을\s*해제",
     r"역할을\s*변경했",
@@ -231,7 +196,6 @@ def is_injection_attempt(text: str) -> bool:
         (r"이전", r"잊"),
         (r"forget", r"everything"),
         (r"규칙", r"없"),
-        (r"no\s+rules", r"."),
         (r"제한", r"없"),
     ]
     lowered = _strip_noise(text).lower()
@@ -243,14 +207,7 @@ def is_injection_attempt(text: str) -> bool:
     return False
 
 
-RFIVEM_INJECTION_REPLY = (
-    "해당 요청은 처리할 수 없습니다.\n"
-    "저는 **RFIVEM** 법률·RP 판별 AI이며, RP 상황·법전·용어 관련 질문만 도와드릴 수 있어요.\n"
-    "구체적인 상황이나 용어를 적어 주세요."
-)
-
-
-def prepare_history_for_llm(history: list[dict], server_mode: str = "lumentia") -> list[dict]:
+def prepare_history_for_llm(history: list[dict]) -> list[dict]:
     cleaned = []
     for item in history:
         if item.get("role") == "user" and is_injection_attempt(item.get("content", "")):
@@ -267,31 +224,16 @@ def prepare_history_for_llm(history: list[dict], server_mode: str = "lumentia") 
         if i == last_user_idx and item.get("role") == "user":
             result.append({
                 "role": "user",
-                "content": wrap_user_message(item.get("content", ""), server_mode),
+                "content": wrap_user_message(item.get("content", "")),
             })
         else:
             result.append(item)
     return result
 
 
-def wrap_user_message(content: str, server_mode: str = "lumentia") -> str:
-    if server_mode == "rfivem":
-        from bot.services.rfivem_terms import normalize_rfivem_text
-
-        safe = normalize_rfivem_text(content)
-        return (
-            f"[RFIVEM 문의]\n{safe}\n"
-            "※ RFIVEM 법전·RP 판별만. 한국어만. 판정·이유·결과 3~4줄. "
-            "유튜브·유머·외주·코드·잡담·외국어 금지. 범위 밖이면 거절."
-        )
-
+def wrap_user_message(content: str) -> str:
     safe = content.strip()
-    return (
-        f"[고객 문의]\n{safe}\n"
-        "※ Lumentia 외주·견적·서비스·등급만. 한국어만. 3~8문장. "
-        "가격·기간 질문이면 **원·일 숫자** 반드시 포함. "
-        "유튜브·유머·코드작성·잡담·외국어 금지. 범위 밖이면 거절."
-    )
+    return f"[고객 문의]\n{safe}"
 
 
 def is_unsafe_output(text: str, user_message: str) -> bool:

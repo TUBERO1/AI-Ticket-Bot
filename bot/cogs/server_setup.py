@@ -4,7 +4,6 @@ from discord.ext import commands
 
 from bot.config import AppSettings
 from bot.db import Database
-from bot.guild_config import MODE_LUMENTIA, MODE_RFIVEM
 from bot.guild_resolver import resolve_guild_config
 
 
@@ -14,9 +13,9 @@ class PromptModal(discord.ui.Modal, title="서버 프롬프트 설정"):
         self.db = db
         self.guild_id = guild_id
         self.prompt_input = discord.ui.TextInput(
-            label="서버 전용 AI 안내",
+            label="서버 전용 안내",
             style=discord.TextStyle.paragraph,
-            placeholder="이 서버만의 가격, 정책, 서비스 설명 등을 적으세요.",
+            placeholder="가격, 규칙, FAQ 등 이 서버에서만 쓸 안내를 적으세요.",
             default=current[:2000] if current else None,
             max_length=2000,
             required=True,
@@ -25,7 +24,7 @@ class PromptModal(discord.ui.Modal, title="서버 프롬프트 설정"):
 
     async def on_submit(self, interaction: discord.Interaction):
         await self.db.set_custom_prompt(self.guild_id, self.prompt_input.value.strip())
-        await interaction.response.send_message("서버 프롬프트가 저장되었습니다.", ephemeral=True)
+        await interaction.response.send_message("서버 프롬프트를 저장했습니다.", ephemeral=True)
 
 
 class ServerSetup(commands.GroupCog, name="서버설정"):
@@ -63,10 +62,7 @@ class ServerSetup(commands.GroupCog, name="서버설정"):
 
         prompt_preview = cfg.custom_prompt[:150] + "..." if len(cfg.custom_prompt) > 150 else (cfg.custom_prompt or "없음")
 
-        mode_label = "RFIVEM (법률·RP 판별)" if cfg.server_mode == MODE_RFIVEM else "Lumentia (외주 문의)"
-
         embed = discord.Embed(title="서버 설정", color=discord.Color.blurple())
-        embed.add_field(name="서버 모드", value=mode_label, inline=False)
         embed.add_field(name="티켓 카테고리", value=category, inline=False)
         embed.add_field(name="관리자 역할", value=staff, inline=False)
         embed.add_field(name="문의 채널", value=support, inline=False)
@@ -74,26 +70,6 @@ class ServerSetup(commands.GroupCog, name="서버설정"):
         embed.set_footer(text=f"서버 ID: {interaction.guild.id}")
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
-
-    @app_commands.command(name="모드", description="서버 AI 모드를 설정합니다 (Lumentia / RFIVEM)")
-    @app_commands.describe(mode="lumentia=외주 문의, rfivem=법률·RP 판별")
-    @app_commands.choices(
-        mode=[
-            app_commands.Choice(name="Lumentia (외주 문의)", value=MODE_LUMENTIA),
-            app_commands.Choice(name="RFIVEM (법률·RP 판별)", value=MODE_RFIVEM),
-        ]
-    )
-    async def server_mode(self, interaction: discord.Interaction, mode: app_commands.Choice[str]):
-        if not interaction.guild:
-            await interaction.response.send_message("서버에서만 사용할 수 있습니다.", ephemeral=True)
-            return
-
-        await self.db.set_server_mode(interaction.guild.id, mode.value)
-        if mode.value == MODE_RFIVEM:
-            label = "RFIVEM (법률·RP 판별)"
-        else:
-            label = "Lumentia (외주 문의)"
-        await interaction.response.send_message(f"서버 모드: **{label}**", ephemeral=True)
 
     @app_commands.command(name="티켓카테고리", description="티켓이 생성될 카테고리를 설정합니다")
     @app_commands.describe(category="티켓 채널 카테고리 (비우면 해제)")
@@ -110,7 +86,7 @@ class ServerSetup(commands.GroupCog, name="서버설정"):
         if category:
             await interaction.response.send_message(f"티켓 카테고리: {category.mention}", ephemeral=True)
         else:
-            await interaction.response.send_message("티켓 카테고리 설정이 해제되었습니다.", ephemeral=True)
+            await interaction.response.send_message("티켓 카테고리 설정을 해제했습니다.", ephemeral=True)
 
     @app_commands.command(name="관리자역할", description="관리자 호출 시 멘션할 역할을 설정합니다")
     @app_commands.describe(role="관리자 역할 (비우면 해제)")
@@ -127,7 +103,7 @@ class ServerSetup(commands.GroupCog, name="서버설정"):
         if role:
             await interaction.response.send_message(f"관리자 역할: {role.mention}", ephemeral=True)
         else:
-            await interaction.response.send_message("관리자 역할 설정이 해제되었습니다.", ephemeral=True)
+            await interaction.response.send_message("관리자 역할 설정을 해제했습니다.", ephemeral=True)
 
     @app_commands.command(name="문의채널등록", description="AI 자동응답 문의 채널을 추가합니다")
     @app_commands.describe(channel="문의 채널")
@@ -191,7 +167,7 @@ class ServerSetup(commands.GroupCog, name="서버설정"):
             return
 
         await self.db.set_custom_prompt(interaction.guild.id, "")
-        await interaction.response.send_message("서버 프롬프트가 삭제되었습니다.", ephemeral=True)
+        await interaction.response.send_message("서버 프롬프트를 삭제했습니다.", ephemeral=True)
 
 
 async def setup(bot: commands.Bot):
