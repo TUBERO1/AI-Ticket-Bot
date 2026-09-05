@@ -20,8 +20,8 @@ from bot.services.scope import greeting_reply, is_greeting_only
 log = logging.getLogger("bot.llm")
 
 FALLBACK_MESSAGE = (
-    "지금은 답변을 만들지 못했어요. 잠시 후 다시 보내거나 "
-    "**관리자 호출**을 눌러 주세요."
+    "I couldn't generate a reply right now. Try again in a moment, "
+    "or press **Call Staff**."
 )
 
 
@@ -65,7 +65,7 @@ class LlmService:
             await asyncio.to_thread(self._get_client(runtime.base_url).models.list)
             return True
         except Exception as e:
-            log.error("Ollama 연결 실패: %s", e)
+            log.error("Ollama connection failed: %s", e)
             return False
 
     async def _report(self, event: str, ctx: AbuseContext | None, content: str, note: str = ""):
@@ -82,7 +82,7 @@ class LlmService:
         latest = self._latest_user_message(truncated)
 
         if is_injection_attempt(latest):
-            log.warning("인젝션 시도 차단: %s", latest[:80])
+            log.warning("Blocked injection attempt: %s", latest[:80])
             await self._report("injection", abuse_ctx, latest)
             return INJECTION_REPLY
 
@@ -110,14 +110,14 @@ class LlmService:
             if content and content.strip():
                 reply = sanitize_reply(content.strip())
                 if is_unsafe_output(reply, latest):
-                    log.warning("위험 응답 차단: %s", reply[:80])
+                    log.warning("Blocked unsafe output: %s", reply[:80])
                     await self._report("unsafe_output", abuse_ctx, latest, note=reply[:300])
                     return INJECTION_REPLY
                 return reply
         except Exception as e:
-            log.error("LLM 응답 실패: %s", e)
+            log.error("LLM reply failed: %s", e)
 
         return FALLBACK_MESSAGE
 
     def welcome_message(self) -> str:
-        return "안녕하세요. 문의 내용을 남겨 주시면 답변드릴게요."
+        return "Hi. Send your question and I will reply."

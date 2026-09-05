@@ -7,10 +7,10 @@ import discord
 log = logging.getLogger("bot.abuse")
 
 EVENT_META = {
-    "injection": ("프롬프트 인젝션", discord.Color.red()),
-    "out_of_scope": ("범위 밖 문의", discord.Color.orange()),
-    "unsafe_output": ("위험 응답 차단", discord.Color.red()),
-    "spam_repeat": ("반복 스팸", discord.Color.dark_red()),
+    "injection": ("Prompt injection", discord.Color.red()),
+    "out_of_scope": ("Out of scope", discord.Color.orange()),
+    "unsafe_output": ("Unsafe output blocked", discord.Color.red()),
+    "spam_repeat": ("Spam / repeat", discord.Color.dark_red()),
 }
 
 
@@ -40,7 +40,7 @@ class AbuseContext:
 def _clip(text: str, limit: int = 900) -> str:
     text = (text or "").strip()
     if len(text) <= limit:
-        return text or "(내용 없음)"
+        return text or "(empty)"
     return text[: limit - 3] + "..."
 
 
@@ -77,16 +77,16 @@ class AbuseLogger:
         title, color = EVENT_META.get(event, (event, discord.Color.greyple()))
         now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
-        embed = discord.Embed(title=f"악용 탐지 · {title}", color=color, timestamp=datetime.now(timezone.utc))
-        embed.add_field(name="유저", value=f"<@{ctx.user_id}>\n`{ctx.user_id}`", inline=True)
-        embed.add_field(name="서버", value=f"{ctx.guild_name}\n`{ctx.guild_id}`", inline=True)
-        embed.add_field(name="채널", value=f"<#{ctx.channel_id}>\n`{ctx.channel_id}`", inline=False)
-        embed.add_field(name="내용", value=f"```\n{_clip(content)}\n```", inline=False)
+        embed = discord.Embed(title=f"Abuse · {title}", color=color, timestamp=datetime.now(timezone.utc))
+        embed.add_field(name="User", value=f"<@{ctx.user_id}>\n`{ctx.user_id}`", inline=True)
+        embed.add_field(name="Guild", value=f"{ctx.guild_name}\n`{ctx.guild_id}`", inline=True)
+        embed.add_field(name="Channel", value=f"<#{ctx.channel_id}>\n`{ctx.channel_id}`", inline=False)
+        embed.add_field(name="Content", value=f"```\n{_clip(content)}\n```", inline=False)
         if note:
-            embed.add_field(name="비고", value=_clip(note, 500), inline=False)
+            embed.add_field(name="Note", value=_clip(note, 500), inline=False)
         embed.set_footer(text=now)
 
         try:
             await channel.send(embed=embed, allowed_mentions=discord.AllowedMentions.none())
         except discord.HTTPException as e:
-            log.error("악용 로그 전송 실패: %s", e)
+            log.error("Failed to send abuse log: %s", e)

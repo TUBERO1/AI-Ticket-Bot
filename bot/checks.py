@@ -10,7 +10,7 @@ def is_developer(user_id: int, settings: AppSettings) -> bool:
 async def deny_unless_developer(interaction: discord.Interaction, settings: AppSettings) -> bool:
     if is_developer(interaction.user.id, settings):
         return True
-    msg = "이 명령은 **봇 개발자**만 사용할 수 있습니다."
+    msg = "Only bot developers can use this command."
     if interaction.response.is_done():
         await interaction.followup.send(msg, ephemeral=True)
     else:

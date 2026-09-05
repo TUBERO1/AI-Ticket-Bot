@@ -101,7 +101,7 @@ class Database:
         gcols = {row[1] for row in await cursor.fetchall()}
         if "server_mode" not in gcols:
             await self._conn.execute(
-                "ALTER TABLE guild_settings ADD COLUMN server_mode TEXT NOT NULL DEFAULT 'lumentia'"
+                "ALTER TABLE guild_settings ADD COLUMN server_mode TEXT NOT NULL DEFAULT 'default'"
             )
 
     async def close(self):

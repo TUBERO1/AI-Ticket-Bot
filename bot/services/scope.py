@@ -1,16 +1,16 @@
 import re
 
 GREETING_ONLY = re.compile(
-    r"^(안녕|안녕하세요|안뇽|안뇽하세요|하이|헬로|hello|hi|hey|반가|감사|고마|thanks|thank\s*you)[\s!.?~ㅋㅎ]*$",
+    r"^(hi|hello|hey|yo|sup|thanks|thank\s*you|thx|안녕하세요|안녕|하이|헬로)[\s!.?~ㅋㅎ]*$",
     re.I,
 )
 
 SCOPE_REPLY = (
-    "문의 내용을 조금 더 구체적으로 적어 주세요.\n"
-    "필요하면 티켓에서 관리자 호출을 눌러 주세요."
+    "Please describe your issue a bit more clearly.\n"
+    "You can also use Call Staff in the ticket if you need a human."
 )
 
-GREETING_REPLY = "안녕하세요. 문의 내용을 남겨 주시면 바로 도와드릴게요."
+GREETING_REPLY = "Hi. Send your question and I will help."
 
 
 def _norm(text: str) -> str:

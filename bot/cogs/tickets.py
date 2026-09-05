@@ -53,27 +53,27 @@ class Tickets(commands.Cog):
             return ch
         return None
 
-    @app_commands.command(name="티켓패널", description="문의 티켓 패널을 이 채널에 배포합니다")
+    @app_commands.command(name="ticket-panel", description="Post the ticket panel in this channel")
     async def deploy_panel(self, interaction: discord.Interaction):
         if not interaction.guild or not interaction.channel:
-            await interaction.response.send_message("서버 채널에서만 사용할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message("This command only works in a server channel.", ephemeral=True)
             return
 
         embed = discord.Embed(
-            title="📩 1:1 문의",
+            title="Support ticket",
             description=(
-                "아래 **문의하기**를 누르면 개인 문의 채널이 만들어집니다.\n"
-                "AI가 먼저 답하고, 필요하면 **관리자 호출**도 됩니다."
+                "Press **Open Ticket** to create a private inquiry channel.\n"
+                "AI answers first. Use **Call Staff** if you need a human."
             ),
             color=discord.Color.blurple(),
         )
-        await interaction.response.send_message("티켓 패널을 배포했습니다.", ephemeral=True)
+        await interaction.response.send_message("Ticket panel posted.", ephemeral=True)
         await interaction.channel.send(embed=embed, view=TicketPanelView())
 
     async def open_ticket(self, interaction: discord.Interaction):
         if not interaction.guild or not isinstance(interaction.user, discord.Member):
             if not interaction.response.is_done():
-                await interaction.response.send_message("서버에서만 이용할 수 있습니다.", ephemeral=True)
+                await interaction.response.send_message("This only works in a server.", ephemeral=True)
             return
 
         if not interaction.response.is_done():
@@ -86,7 +86,7 @@ class Tickets(commands.Cog):
             channel = interaction.guild.get_channel(existing["channel_id"])
             if channel:
                 await interaction.followup.send(
-                    f"이미 열린 티켓이 있습니다: {channel.mention}",
+                    f"You already have an open ticket: {channel.mention}",
                     ephemeral=True,
                 )
                 return
@@ -94,30 +94,30 @@ class Tickets(commands.Cog):
 
         category = self._resolve_category(interaction.guild, guild_cfg.ticket_category_id)
         safe_name = "".join(c for c in interaction.user.name[:20] if c.isalnum() or c in "-_") or "user"
-        channel_name = f"티켓-{safe_name}"
+        channel_name = f"ticket-{safe_name}"
 
         try:
             channel = await interaction.guild.create_text_channel(
                 name=channel_name,
                 category=category,
                 overwrites=self._staff_overwrites(interaction.guild, interaction.user, guild_cfg.staff_role_id),
-                reason=f"티켓 생성: {interaction.user}",
+                reason=f"Ticket opened by {interaction.user}",
             )
         except discord.Forbidden:
             await interaction.followup.send(
-                "티켓 채널을 만들 권한이 없습니다. 봇 권한과 카테고리 설정을 확인해 주세요.",
+                "I don't have permission to create ticket channels. Check bot permissions and category settings.",
                 ephemeral=True,
             )
             return
         except discord.HTTPException as e:
-            await interaction.followup.send(f"티켓 생성 실패: {e.text}", ephemeral=True)
+            await interaction.followup.send(f"Failed to create ticket: {e.text}", ephemeral=True)
             return
 
         ticket_id = await self.db.create_ticket(channel.id, interaction.guild.id, interaction.user.id)
         welcome = (
-            f"{interaction.user.mention} 님, 문의 채널이 열렸습니다.\n\n"
-            "궁금한 내용을 메시지로 남겨 주시면 AI가 도와드립니다.\n"
-            "해결이 어려우면 **관리자 호출** 버튼을 눌러 주세요."
+            f"{interaction.user.mention}, your ticket channel is ready.\n\n"
+            "Send your question here and the AI will help.\n"
+            "If that isn't enough, press **Call Staff**."
         )
         await channel.send(welcome, view=TicketControlView())
         await self.db.add_message(
@@ -125,7 +125,7 @@ class Tickets(commands.Cog):
             self.llm.welcome_message(),
             ticket_id=ticket_id,
         )
-        await interaction.followup.send(f"티켓이 생성되었습니다: {channel.mention}", ephemeral=True)
+        await interaction.followup.send(f"Ticket created: {channel.mention}", ephemeral=True)
 
     async def call_staff(self, interaction: discord.Interaction):
         if not interaction.guild or not interaction.channel:
@@ -133,7 +133,7 @@ class Tickets(commands.Cog):
 
         ticket = await self.db.get_ticket_by_channel(interaction.channel.id)
         if not ticket or ticket["status"] != "open":
-            await interaction.response.send_message("열린 티켓 채널이 아닙니다.", ephemeral=True)
+            await interaction.response.send_message("This is not an open ticket channel.", ephemeral=True)
             return
 
         guild_cfg = await resolve_guild_config(self.db, interaction.guild.id)
@@ -142,14 +142,14 @@ class Tickets(commands.Cog):
             mention = f"<@&{guild_cfg.staff_role_id}> "
 
         await interaction.response.send_message(
-            f"{mention}관리자 호출 요청이 접수되었습니다. 잠시만 기다려 주세요.",
+            f"{mention}Staff has been notified. Please wait a moment.",
             allowed_mentions=discord.AllowedMentions(roles=True),
         )
 
     async def request_close(self, interaction: discord.Interaction):
         ticket = await self.db.get_ticket_by_channel(interaction.channel.id)
         if not ticket or ticket["status"] != "open":
-            await interaction.response.send_message("열린 티켓 채널이 아닙니다.", ephemeral=True)
+            await interaction.response.send_message("This is not an open ticket channel.", ephemeral=True)
             return
 
         guild_cfg = await resolve_guild_config(self.db, interaction.guild.id)
@@ -159,27 +159,27 @@ class Tickets(commands.Cog):
             is_staff = any(r.id == guild_cfg.staff_role_id for r in interaction.user.roles)
 
         if not is_owner and not is_staff and not interaction.user.guild_permissions.manage_guild:
-            await interaction.response.send_message("티켓을 종료할 권한이 없습니다.", ephemeral=True)
+            await interaction.response.send_message("You can't close this ticket.", ephemeral=True)
             return
 
         await interaction.response.send_message(
-            "정말 이 티켓을 종료할까요? 채널이 삭제됩니다.",
+            "Close this ticket? The channel will be deleted.",
             view=TicketCloseConfirmView(),
         )
 
     async def confirm_close(self, interaction: discord.Interaction):
         if not isinstance(interaction.channel, discord.TextChannel):
-            await interaction.response.send_message("티켓 채널에서만 종료할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message("Tickets can only be closed in a ticket channel.", ephemeral=True)
             return
 
         ticket = await self.db.get_ticket_by_channel(interaction.channel.id)
         if not ticket:
-            await interaction.response.send_message("티켓 정보를 찾을 수 없습니다.", ephemeral=True)
+            await interaction.response.send_message("Ticket not found.", ephemeral=True)
             return
 
         await self.db.close_ticket(interaction.channel.id)
-        await interaction.response.send_message("티켓을 종료합니다. 채널이 곧 삭제됩니다.", ephemeral=True)
-        await interaction.channel.delete(reason=f"티켓 종료: {interaction.user}")
+        await interaction.response.send_message("Closing ticket. Channel will be deleted shortly.", ephemeral=True)
+        await interaction.channel.delete(reason=f"Ticket closed by {interaction.user}")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -220,7 +220,7 @@ class Tickets(commands.Cog):
                 abuse_ctx=AbuseContext.from_message(message),
             )
         except discord.HTTPException:
-            await message.channel.send("응답 전송에 실패했습니다. 다시 시도해 주세요.")
+            await message.channel.send("Failed to send the reply. Please try again.")
 
 
 async def setup(bot: commands.Bot):

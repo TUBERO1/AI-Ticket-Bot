@@ -107,7 +107,7 @@ async def process_pending_consult(bot: commands.Bot, db: Database, user_id: int)
             abuse_ctx=ctx,
         )
     except discord.HTTPException:
-        await channel.send("응답 전송에 실패했습니다. 다시 시도해 주세요.")
+        await channel.send("Failed to send the reply. Please try again.")
         return False
     finally:
         await db.clear_pending_consult(user_id)
@@ -141,8 +141,8 @@ async def ensure_terms_before_ai(
     )
 
     prompt = (
-        f"{message.author.mention} AI 상담을 쓰려면 **이용약관에 동의**해 주세요.\n"
-        "**이용약관 확인하기**는 본인만 보이고, **동의**는 처음 한 번만 하면 됩니다."
+        f"{message.author.mention} To use AI support, please **agree to the terms**.\n"
+        "**View Terms** is only visible to you, and **Agree** is only needed once."
     )
     await target.send(prompt, view=TermsAgreementView(), allowed_mentions=SAFE_MENTIONS)
     return False

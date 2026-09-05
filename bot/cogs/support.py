@@ -33,7 +33,7 @@ class Support(commands.Cog):
         return safe.strip() or "user"
 
     def _thread_name(self, user: discord.User | discord.Member) -> str:
-        return f"문의-{self._safe_name(user)}·{user.id}"
+        return f"inquiry-{self._safe_name(user)}-{user.id}"
 
     def _is_bot(self, user_id: int | None) -> bool:
         return bool(user_id and self.bot.user and user_id == self.bot.user.id)
@@ -43,7 +43,7 @@ class Support(commands.Cog):
             async for msg in thread.history(limit=10, oldest_first=True):
                 if not msg.author.bot:
                     continue
-                if "문의 스레드입니다" not in msg.content:
+                if "support thread" not in msg.content.lower():
                     continue
                 for user in msg.mentions:
                     if not user.bot:
@@ -118,13 +118,13 @@ class Support(commands.Cog):
         thread = await message.create_thread(
             name=self._thread_name(message.author),
             auto_archive_duration=1440,
-            reason=f"문의 스레드: {message.author}",
+            reason=f"Support thread for {message.author}",
         )
 
         await self._save_owner(thread, message.author.id)
         intro = (
-            f"{message.author.mention} 님의 문의 스레드입니다.\n"
-            "이 스레드는 본인만 사용할 수 있습니다. 여기서 이어서 대화하세요."
+            f"{message.author.mention}, this is your support thread.\n"
+            "Only you should use this thread. Continue the conversation here."
         )
         await thread.send(intro)
         return thread
@@ -148,7 +148,7 @@ class Support(commands.Cog):
             if not await self._owns_thread(message.channel, message.author):
                 try:
                     await message.reply(
-                        "다른 사람의 문의 스레드입니다. 새 문의는 채널에 메시지를 남기면 새 스레드가 만들어집니다.",
+                        "This is someone else's support thread. Post in the channel to open a new one.",
                         mention_author=False,
                     )
                 except discord.HTTPException:
@@ -162,7 +162,7 @@ class Support(commands.Cog):
                 thread = await self._create_thread(message)
             except (discord.Forbidden, discord.HTTPException):
                 await message.channel.send(
-                    f"{message.author.mention} 스레드를 만들 수 없습니다. 봇 권한을 확인해 주세요.",
+                    f"{message.author.mention} I couldn't create a thread. Check bot permissions.",
                     delete_after=15,
                 )
                 return
@@ -191,7 +191,7 @@ class Support(commands.Cog):
                 abuse_ctx=AbuseContext.from_message(message),
             )
         except discord.HTTPException:
-            await thread.send("응답 전송에 실패했습니다. 다시 시도해 주세요.")
+            await thread.send("Failed to send the reply. Please try again.")
 
 
 async def setup(bot: commands.Bot):

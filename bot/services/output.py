@@ -6,6 +6,7 @@ SAFE_MENTIONS = discord.AllowedMentions.none()
 
 _TAG_CLEANUP = [
     (re.compile(r"</?user>", re.I), ""),
+    (re.compile(r"\[User\s*inquiry\]", re.I), ""),
     (re.compile(r"\[고객\s*문의\]", re.I), ""),
 ]
 

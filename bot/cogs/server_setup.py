@@ -7,15 +7,15 @@ from bot.db import Database
 from bot.guild_resolver import resolve_guild_config
 
 
-class PromptModal(discord.ui.Modal, title="서버 프롬프트 설정"):
+class PromptModal(discord.ui.Modal, title="Server prompt"):
     def __init__(self, db: Database, guild_id: int, current: str = ""):
         super().__init__()
         self.db = db
         self.guild_id = guild_id
         self.prompt_input = discord.ui.TextInput(
-            label="서버 전용 안내",
+            label="Server notes for the AI",
             style=discord.TextStyle.paragraph,
-            placeholder="가격, 규칙, FAQ 등 이 서버에서만 쓸 안내를 적으세요.",
+            placeholder="Pricing, rules, FAQ, or anything this server should know.",
             default=current[:2000] if current else None,
             max_length=2000,
             required=True,
@@ -24,29 +24,29 @@ class PromptModal(discord.ui.Modal, title="서버 프롬프트 설정"):
 
     async def on_submit(self, interaction: discord.Interaction):
         await self.db.set_custom_prompt(self.guild_id, self.prompt_input.value.strip())
-        await interaction.response.send_message("서버 프롬프트를 저장했습니다.", ephemeral=True)
+        await interaction.response.send_message("Server prompt saved.", ephemeral=True)
 
 
-class ServerSetup(commands.GroupCog, name="서버설정"):
+class ServerSetup(commands.GroupCog, name="server-setup"):
     def __init__(self, bot: commands.Bot, settings: AppSettings, db: Database):
         self.bot = bot
         self.settings = settings
         self.db = db
 
-    @app_commands.command(name="보기", description="이 서버의 봇 설정을 확인합니다")
+    @app_commands.command(name="show", description="Show bot settings for this server")
     async def show(self, interaction: discord.Interaction):
         if not interaction.guild:
-            await interaction.response.send_message("서버에서만 사용할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message("Server only.", ephemeral=True)
             return
 
         cfg = await resolve_guild_config(self.db, interaction.guild.id)
 
-        category = "미설정"
+        category = "Not set"
         if cfg.ticket_category_id:
             ch = interaction.guild.get_channel(cfg.ticket_category_id)
             category = ch.mention if ch else f"`{cfg.ticket_category_id}`"
 
-        staff = "미설정"
+        staff = "Not set"
         if cfg.staff_role_id:
             role = interaction.guild.get_role(cfg.staff_role_id)
             staff = role.mention if role else f"`{cfg.staff_role_id}`"
@@ -58,99 +58,98 @@ class ServerSetup(commands.GroupCog, name="서버설정"):
                 channels.append(ch.mention if ch else f"`{cid}`")
             support = ", ".join(channels)
         else:
-            support = "미설정"
+            support = "Not set"
 
-        prompt_preview = cfg.custom_prompt[:150] + "..." if len(cfg.custom_prompt) > 150 else (cfg.custom_prompt or "없음")
+        prompt_preview = cfg.custom_prompt[:150] + "..." if len(cfg.custom_prompt) > 150 else (cfg.custom_prompt or "None")
 
-        embed = discord.Embed(title="서버 설정", color=discord.Color.blurple())
-        embed.add_field(name="티켓 카테고리", value=category, inline=False)
-        embed.add_field(name="관리자 역할", value=staff, inline=False)
-        embed.add_field(name="문의 채널", value=support, inline=False)
-        embed.add_field(name="서버 프롬프트", value=prompt_preview, inline=False)
-        embed.set_footer(text=f"서버 ID: {interaction.guild.id}")
+        embed = discord.Embed(title="Server settings", color=discord.Color.blurple())
+        embed.add_field(name="Ticket category", value=category, inline=False)
+        embed.add_field(name="Staff role", value=staff, inline=False)
+        embed.add_field(name="Support channels", value=support, inline=False)
+        embed.add_field(name="Server prompt", value=prompt_preview, inline=False)
+        embed.set_footer(text=f"Guild ID: {interaction.guild.id}")
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @app_commands.command(name="티켓카테고리", description="티켓이 생성될 카테고리를 설정합니다")
-    @app_commands.describe(category="티켓 채널 카테고리 (비우면 해제)")
+    @app_commands.command(name="ticket-category", description="Set the category where tickets are created")
+    @app_commands.describe(category="Ticket category (leave empty to clear)")
     async def ticket_category(
         self,
         interaction: discord.Interaction,
         category: discord.CategoryChannel | None = None,
     ):
         if not interaction.guild:
-            await interaction.response.send_message("서버에서만 사용할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message("Server only.", ephemeral=True)
             return
 
         await self.db.set_ticket_category(interaction.guild.id, category.id if category else None)
         if category:
-            await interaction.response.send_message(f"티켓 카테고리: {category.mention}", ephemeral=True)
+            await interaction.response.send_message(f"Ticket category: {category.mention}", ephemeral=True)
         else:
-            await interaction.response.send_message("티켓 카테고리 설정을 해제했습니다.", ephemeral=True)
+            await interaction.response.send_message("Ticket category cleared.", ephemeral=True)
 
-    @app_commands.command(name="관리자역할", description="관리자 호출 시 멘션할 역할을 설정합니다")
-    @app_commands.describe(role="관리자 역할 (비우면 해제)")
+    @app_commands.command(name="staff-role", description="Set the role pinged by Call Staff")
+    @app_commands.describe(role="Staff role (leave empty to clear)")
     async def staff_role(
         self,
         interaction: discord.Interaction,
         role: discord.Role | None = None,
     ):
         if not interaction.guild:
-            await interaction.response.send_message("서버에서만 사용할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message("Server only.", ephemeral=True)
             return
 
         await self.db.set_staff_role(interaction.guild.id, role.id if role else None)
         if role:
-            await interaction.response.send_message(f"관리자 역할: {role.mention}", ephemeral=True)
+            await interaction.response.send_message(f"Staff role: {role.mention}", ephemeral=True)
         else:
-            await interaction.response.send_message("관리자 역할 설정을 해제했습니다.", ephemeral=True)
+            await interaction.response.send_message("Staff role cleared.", ephemeral=True)
 
-    @app_commands.command(name="문의채널등록", description="AI 자동응답 문의 채널을 추가합니다")
-    @app_commands.describe(channel="문의 채널")
+    @app_commands.command(name="add-support", description="Add a channel for AI support threads")
+    @app_commands.describe(channel="Support channel")
     async def add_support(self, interaction: discord.Interaction, channel: discord.TextChannel):
         if not interaction.guild:
-            await interaction.response.send_message("서버에서만 사용할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message("Server only.", ephemeral=True)
             return
 
         added = await self.db.add_support_channel(interaction.guild.id, channel.id)
         if added:
-            await interaction.response.send_message(f"문의 채널 등록: {channel.mention}", ephemeral=True)
+            await interaction.response.send_message(f"Support channel added: {channel.mention}", ephemeral=True)
         else:
-            await interaction.response.send_message("이미 등록된 채널입니다.", ephemeral=True)
+            await interaction.response.send_message("That channel is already registered.", ephemeral=True)
 
-    @app_commands.command(name="문의채널해제", description="AI 자동응답 문의 채널을 제거합니다")
-    @app_commands.describe(channel="해제할 문의 채널")
+    @app_commands.command(name="remove-support", description="Remove an AI support channel")
+    @app_commands.describe(channel="Support channel to remove")
     async def remove_support(self, interaction: discord.Interaction, channel: discord.TextChannel):
         if not interaction.guild:
-            await interaction.response.send_message("서버에서만 사용할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message("Server only.", ephemeral=True)
             return
 
         removed = await self.db.remove_support_channel(interaction.guild.id, channel.id)
         if removed:
-            await interaction.response.send_message(f"문의 채널 해제: {channel.mention}", ephemeral=True)
+            await interaction.response.send_message(f"Support channel removed: {channel.mention}", ephemeral=True)
         else:
-            await interaction.response.send_message("등록되지 않은 채널입니다.", ephemeral=True)
+            await interaction.response.send_message("That channel is not registered.", ephemeral=True)
 
-    @app_commands.command(name="프롬프트설정", description="이 서버 전용 AI 프롬프트를 설정합니다")
+    @app_commands.command(name="set-prompt", description="Set a custom AI prompt for this server")
     async def prompt_set(self, interaction: discord.Interaction):
         if not interaction.guild:
-            await interaction.response.send_message("서버에서만 사용할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message("Server only.", ephemeral=True)
             return
 
         cfg = await resolve_guild_config(self.db, interaction.guild.id)
         await interaction.response.send_modal(PromptModal(self.db, interaction.guild.id, cfg.custom_prompt))
 
-    @app_commands.command(name="프롬프트보기", description="이 서버에 설정된 AI 프롬프트를 확인합니다")
+    @app_commands.command(name="show-prompt", description="Show the custom AI prompt for this server")
     async def prompt_show(self, interaction: discord.Interaction):
         if not interaction.guild:
-            await interaction.response.send_message("서버에서만 사용할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message("Server only.", ephemeral=True)
             return
 
         cfg = await resolve_guild_config(self.db, interaction.guild.id)
         if not cfg.custom_prompt:
             await interaction.response.send_message(
-                "설정된 서버 프롬프트가 없습니다.\n"
-                "`/서버설정 프롬프트설정`으로 추가하세요.",
+                "No server prompt set.\nUse `/server-setup set-prompt` to add one.",
                 ephemeral=True,
             )
             return
@@ -160,14 +159,14 @@ class ServerSetup(commands.GroupCog, name="서버설정"):
             text = text[:1900] + "..."
         await interaction.response.send_message(f"```\n{text}\n```", ephemeral=True)
 
-    @app_commands.command(name="프롬프트삭제", description="서버 전용 AI 프롬프트를 삭제합니다")
+    @app_commands.command(name="clear-prompt", description="Clear the custom AI prompt for this server")
     async def prompt_clear(self, interaction: discord.Interaction):
         if not interaction.guild:
-            await interaction.response.send_message("서버에서만 사용할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message("Server only.", ephemeral=True)
             return
 
         await self.db.set_custom_prompt(interaction.guild.id, "")
-        await interaction.response.send_message("서버 프롬프트를 삭제했습니다.", ephemeral=True)
+        await interaction.response.send_message("Server prompt cleared.", ephemeral=True)
 
 
 async def setup(bot: commands.Bot):

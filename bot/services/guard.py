@@ -2,8 +2,8 @@ import re
 import unicodedata
 
 INJECTION_REPLY = (
-    "그 요청은 처리할 수 없어요.\n"
-    "문의 내용만 남겨 주세요. 필요하면 관리자 호출을 이용해 주세요."
+    "I can't process that request.\n"
+    "Please send a normal support question, or use Call Staff if you need a human."
 )
 
 ZERO_WIDTH = re.compile(r"[\u200b-\u200f\u202a-\u202e\u2060-\u206f\ufeff]")
@@ -233,7 +233,7 @@ def prepare_history_for_llm(history: list[dict]) -> list[dict]:
 
 def wrap_user_message(content: str) -> str:
     safe = content.strip()
-    return f"[고객 문의]\n{safe}"
+    return f"[User inquiry]\n{safe}"
 
 
 def is_unsafe_output(text: str, user_message: str) -> bool:

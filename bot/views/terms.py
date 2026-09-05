@@ -17,7 +17,7 @@ async def _get_bot_db(interaction: discord.Interaction):
 class TermsViewButton(discord.ui.Button):
     def __init__(self):
         super().__init__(
-            label="이용약관 확인하기",
+            label="View Terms",
             style=discord.ButtonStyle.secondary,
             custom_id=TERMS_VIEW_CUSTOM_ID,
         )
@@ -33,7 +33,7 @@ class TermsViewButton(discord.ui.Button):
 class TermsAgreeButton(discord.ui.Button):
     def __init__(self):
         super().__init__(
-            label="동의",
+            label="Agree",
             style=discord.ButtonStyle.success,
             custom_id=TERMS_AGREE_CUSTOM_ID,
         )
@@ -42,7 +42,7 @@ class TermsAgreeButton(discord.ui.Button):
         bot, db = await _get_bot_db(interaction)
         if not db:
             await interaction.response.send_message(
-                "봇이 준비되지 않았습니다. 잠시 후 다시 시도해 주세요.",
+                "The bot is not ready yet. Try again in a moment.",
                 ephemeral=True,
             )
             return
@@ -57,17 +57,17 @@ class TermsAgreeButton(discord.ui.Button):
             ok = await process_pending_consult(bot, db, interaction.user.id)
             if ok:
                 await interaction.followup.send(
-                    "이용약관에 동의하셨습니다. 방금 남기신 문의에 AI가 답변합니다.",
+                    "Thanks. The AI will answer the question you just sent.",
                     ephemeral=True,
                 )
             else:
                 await interaction.followup.send(
-                    "동의가 완료되었습니다. 문의 내용을 다시 보내 주세요.",
+                    "Agreed. Please send your question again.",
                     ephemeral=True,
                 )
         else:
             await interaction.response.send_message(
-                "이용약관에 동의하셨습니다. 이제 AI 상담을 이용할 수 있습니다.",
+                "Agreed. You can use AI support now.",
                 ephemeral=True,
             )
 

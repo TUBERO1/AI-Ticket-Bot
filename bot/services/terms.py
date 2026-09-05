@@ -1,38 +1,38 @@
 TERMS_VERSION = "2026-09-05"
 
-TERMS_TITLE = "AI 문의봇 이용약관"
+TERMS_TITLE = "AI Ticket Bot Terms"
 
 TERMS_SECTIONS = [
     (
-        "개요",
-        "**최종 수정일:** 2026년 9월 5일\n\n"
-        "이 약관은 AI 문의봇 이용 조건을 정합니다.\n"
-        "서비스를 쓰면 약관에 동의한 것으로 봅니다."
+        "Overview",
+        "**Last updated:** September 5, 2026\n\n"
+        "These terms cover use of the AI Ticket Bot.\n"
+        "Using the service means you accept them."
     ),
     (
-        "이용",
-        "• Discord 이용약관과 서버 규칙을 지킨다\n"
-        "• AI 답변은 참고용이며 항상 맞다고 보장하지 않는다\n"
-        "• 운영 중 점검이나 장애로 서비스가 멈출 수 있다"
+        "Use",
+        "• Follow Discord's Terms of Service and your server rules\n"
+        "• AI answers are for reference only and may be wrong\n"
+        "• The service may stop for maintenance or outages"
     ),
     (
-        "금지",
-        "1. 프롬프트 조작·인젝션\n"
-        "2. 매크로·스팸 반복\n"
-        "3. 해킹·악성코드·불법 요청\n"
-        "4. 욕설·협박·혐오 표현\n"
-        "5. 타인 개인정보 수집·유출\n"
-        "6. 봇·서버 운영 방해"
+        "Prohibited",
+        "1. Prompt injection or system abuse\n"
+        "2. Macros / spam floods\n"
+        "3. Hacking, malware, or illegal requests\n"
+        "4. Harassment, threats, or hate speech\n"
+        "5. Collecting or leaking personal data\n"
+        "6. Disrupting bot or server operations"
     ),
     (
-        "기록 · 제한",
-        "문의 내용, Discord ID, 채널·서버 ID, 악용 로그를 남길 수 있다.\n"
-        "약관 위반 시 이용을 막을 수 있다."
+        "Logs & limits",
+        "We may store inquiry text, Discord IDs, channel/server IDs, and abuse logs.\n"
+        "Violations can lead to access being blocked."
     ),
     (
-        "면책",
-        "AI 답변을 믿고 생긴 손해, Discord·네트워크 장애, 불가항력에 대해 "
-        "법령이 허용하는 범위에서 책임을 지지 않는다."
+        "Disclaimer",
+        "To the extent allowed by law, we are not liable for damages from relying on AI answers, "
+        "Discord/network failures, or force majeure."
     ),
 ]
 
@@ -48,6 +48,6 @@ def build_terms_embeds() -> list:
             color=discord.Color.blurple(),
         )
         if i == len(TERMS_SECTIONS):
-            embed.set_footer(text=f"버전 {TERMS_VERSION}")
+            embed.set_footer(text=f"Version {TERMS_VERSION}")
         embeds.append(embed)
     return embeds

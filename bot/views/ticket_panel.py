@@ -12,7 +12,7 @@ async def _get_tickets_cog(interaction: discord.Interaction):
     if not cog:
         if not interaction.response.is_done():
             await interaction.response.send_message(
-                "봇이 아직 준비되지 않았습니다. 잠시 후 다시 시도해 주세요.",
+                "The bot is still starting. Try again in a moment.",
                 ephemeral=True,
             )
         return None
@@ -22,7 +22,7 @@ async def _get_tickets_cog(interaction: discord.Interaction):
 class TicketOpenButton(discord.ui.Button):
     def __init__(self):
         super().__init__(
-            label="문의하기",
+            label="Open Ticket",
             style=discord.ButtonStyle.primary,
             custom_id=TICKET_OPEN_CUSTOM_ID,
             emoji="📩",
@@ -37,7 +37,7 @@ class TicketOpenButton(discord.ui.Button):
 class TicketStaffButton(discord.ui.Button):
     def __init__(self):
         super().__init__(
-            label="관리자 호출",
+            label="Call Staff",
             style=discord.ButtonStyle.secondary,
             custom_id=TICKET_STAFF_CUSTOM_ID,
             emoji="🔔",
@@ -52,7 +52,7 @@ class TicketStaffButton(discord.ui.Button):
 class TicketCloseButton(discord.ui.Button):
     def __init__(self):
         super().__init__(
-            label="티켓 종료",
+            label="Close Ticket",
             style=discord.ButtonStyle.danger,
             custom_id=TICKET_CLOSE_CUSTOM_ID,
             emoji="🔒",
@@ -69,7 +69,7 @@ class TicketCloseConfirmView(discord.ui.View):
         super().__init__(timeout=60)
 
     @discord.ui.button(
-        label="종료 확인",
+        label="Confirm close",
         style=discord.ButtonStyle.danger,
         custom_id=TICKET_CLOSE_CONFIRM_CUSTOM_ID,
     )
@@ -79,12 +79,12 @@ class TicketCloseConfirmView(discord.ui.View):
             await cog.confirm_close(interaction)
 
     @discord.ui.button(
-        label="취소",
+        label="Cancel",
         style=discord.ButtonStyle.secondary,
         custom_id=TICKET_CLOSE_CANCEL_CUSTOM_ID,
     )
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="티켓 종료가 취소되었습니다.", view=None)
+        await interaction.response.edit_message(content="Ticket close cancelled.", view=None)
 
 
 class TicketPanelView(discord.ui.View):
