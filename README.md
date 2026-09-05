@@ -19,7 +19,7 @@
 ## 설치
 
 ```bash
-git clone https://github.com/kore0307/AI-Ticket.git
+git clone https://github.com/TUBERO1/AI-Ticket.git
 cd AI-Ticket
 python -m venv .venv
 ```
